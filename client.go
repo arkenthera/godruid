@@ -10,6 +10,14 @@ import (
 
 const (
 	DefaultEndPoint = "/druid/v2"
+	SQLEndPoint     = "/druid/v2/sql"
+)
+
+type QueryStyle int
+
+const (
+	NativeQueryStyle QueryStyle = 0
+	SQLQueryStyle    QueryStyle = 1
 )
 
 type Client struct {
@@ -22,7 +30,19 @@ type Client struct {
 	HttpClient   *http.Client
 }
 
-func (c *Client) Query(query Query, authToken string) (err error) {
+func (c *Client) Query(query Query) (err error) {
+	return c.NativeQuery(query)
+}
+
+func (c *Client) NativeQuery(query Query) (err error) {
+	return c.PrepareAndExecuteQuery(query, NativeQueryStyle)
+}
+
+func (c *Client) SQLQuery(query Query) (err error) {
+	return c.PrepareAndExecuteQuery(query, SQLQueryStyle)
+}
+
+func (c *Client) PrepareAndExecuteQuery(query Query, style QueryStyle) (err error) {
 	query.setup()
 	var reqJson []byte
 	if c.Debug {
@@ -34,7 +54,7 @@ func (c *Client) Query(query Query, authToken string) (err error) {
 		return
 	}
 
-	result, err := c.QueryRaw(reqJson, authToken)
+	result, err := c.QueryRaw(reqJson, style)
 	if err != nil {
 		return
 	}
@@ -42,11 +62,13 @@ func (c *Client) Query(query Query, authToken string) (err error) {
 	return query.onResponse(result)
 }
 
-func (c *Client) QueryRaw(req []byte, authToken string) (result []byte, err error) {
-	if c.EndPoint == "" {
-		c.EndPoint = DefaultEndPoint
+func (c *Client) QueryRaw(req []byte, style QueryStyle) (result []byte, err error) {
+
+	endPoint := DefaultEndPoint
+	if style == SQLQueryStyle {
+		endPoint = SQLEndPoint
 	}
-	endPoint := c.EndPoint
+
 	if c.Debug {
 		endPoint += "?pretty"
 		c.LastRequest = string(req)
@@ -60,13 +82,6 @@ func (c *Client) QueryRaw(req []byte, authToken string) (result []byte, err erro
 		return nil, err
 	}
 	request.Header.Set("Content-Type", "application/json")
-	if authToken != "" {
-		cookie := &http.Cookie{
-			Name:  "skylight-aaa",
-			Value: authToken,
-		}
-		request.AddCookie(cookie)
-	}
 
 	resp, err := c.HttpClient.Do(request)
 	defer func() {
