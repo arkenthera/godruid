@@ -21,8 +21,7 @@ const (
 )
 
 type Client struct {
-	Url      string
-	EndPoint string
+	Url string
 
 	Debug        bool
 	LastRequest  string
@@ -30,19 +29,19 @@ type Client struct {
 	HttpClient   *http.Client
 }
 
+func (c *Client) SQLQuery(query Query) (err error) {
+	return c.prepareAndExecuteQuery(query, SQLQueryStyle)
+}
+
 func (c *Client) Query(query Query) (err error) {
 	return c.NativeQuery(query)
 }
 
 func (c *Client) NativeQuery(query Query) (err error) {
-	return c.PrepareAndExecuteQuery(query, NativeQueryStyle)
+	return c.prepareAndExecuteQuery(query, NativeQueryStyle)
 }
 
-func (c *Client) SQLQuery(query Query) (err error) {
-	return c.PrepareAndExecuteQuery(query, SQLQueryStyle)
-}
-
-func (c *Client) PrepareAndExecuteQuery(query Query, style QueryStyle) (err error) {
+func (c *Client) prepareAndExecuteQuery(query Query, style QueryStyle) (err error) {
 	query.setup()
 	var reqJson []byte
 	if c.Debug {
@@ -64,9 +63,12 @@ func (c *Client) PrepareAndExecuteQuery(query Query, style QueryStyle) (err erro
 
 func (c *Client) QueryRaw(req []byte, style QueryStyle) (result []byte, err error) {
 
-	endPoint := DefaultEndPoint
-	if style == SQLQueryStyle {
+	var endPoint string
+	switch style {
+	case SQLQueryStyle:
 		endPoint = SQLEndPoint
+	default:
+		endPoint = DefaultEndPoint
 	}
 
 	if c.Debug {
