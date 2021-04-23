@@ -21,6 +21,7 @@ type Aggregation struct {
 	Aggregator  *Aggregation `json:"aggregator,omitempty"`
 	Round       bool         `json:"round,omitempty"`
 	K           int32        `json:"k,omitempty"` // druid-datasketches extension
+	Size		int32 		 `json:"size,omitempty"`
 }
 
 func AggRawJson(rawJson string) *Aggregation {
