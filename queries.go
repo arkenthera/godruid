@@ -334,6 +334,7 @@ type QueryScan struct {
 	QueryType      QueryType              `json:"queryType"`
 	DataSource     string                 `json:"dataSource"`
 	Limit          int                    `json:"limit,omitempty"`
+	Offset 		   int					  `json:"offset,omitempty`
 	Columns        []string               `json:"columns,omitempty"`
 	ResultFormat   string                 `json:"resultFormat,omitempty"`
 	Metric         interface{}            `json:"metric"` // *TopNMetric
